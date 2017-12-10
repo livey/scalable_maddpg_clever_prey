@@ -1,14 +1,17 @@
 import numpy as np
-
+import matplotlib.pyplot as plt
 # the world dimension is fixed, from [-1,1]
-agent_v = .1
-prey_v = .1
+agent_v = .05
+prey_v = .05
 agent_r = .1
 prey_r = .1
 
 class Environ:
-    def __init__(self,num_agents):
+    def __init__(self,num_agents,render=False):
         self.num_agents = num_agents
+        self.dorender = render
+        if render:
+            self.init_render()
 
     def reset(self):
         prey_pos = np.random.uniform(-1,1,[1,2])
@@ -33,6 +36,9 @@ class Environ:
         agents_rewards,\
         prey_reward,\
         done = self.rewards(agents_next_pos, prey_next_pos)
+        if self.dorender:
+            self.render()
+
         return agents_next_pos, prey_next_pos, agents_rewards, prey_reward,done
 
     def rewards(self,agents_pos, prey_pos):
@@ -58,6 +64,24 @@ class Environ:
                 done = True
 
         return agents_rewards, prey_reward ,done
+
+    def init_render(self):
+        self.fig = plt.figure()
+        # ax = fig.add_axes([0,0,1,1], frameon=False, aspect=1)
+        self.ax = self.fig.add_subplot(111)
+        #self.ax.axis('equal')
+        # particles holds the locations of the particles
+        self.agents_sc = self.ax.scatter([], [], s=15 ** 2)
+        self.prey_sc = self.ax.scatter([], [], s=15 ** 2)
+        # particles.set_xdata()
+        # particles.set_ydata()
+        self.ax.set_xlim([-1, 1])
+        self.ax.set_ylim([-1, 1])
+
+    def render(self):
+        self.agents_sc.set_offsets(self.agents_pos)
+        self.prey_sc.set_offsets(self.prey_pos)
+        plt.pause(1e-100)
 
 
 
