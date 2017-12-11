@@ -2,7 +2,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 # the world dimension is fixed, from [-1,1]
 agent_v = .05
-prey_v = .005
+prey_v = .03
 agent_r = .1
 prey_r = .1
 
@@ -32,10 +32,10 @@ class Environ:
         return agents_obs, prey_obs
 
     def step(self,agents_action, prey_action):
-        agents_action *=np.pi
-        prey_action   *=np.pi
-        agents_next_pos = self.agents_pos + np.hstack((np.cos(agents_action),np.sin(agents_action)))*agent_v
-        prey_next_pos = self.prey_pos + np.hstack((np.cos(prey_action),np.sin(prey_action)))*prey_v
+        a_a = agents_action * np.pi
+        p_a =  prey_action*np.pi
+        agents_next_pos = self.agents_pos + np.hstack((np.cos(a_a),np.sin(a_a)))*agent_v
+        prey_next_pos = self.prey_pos + np.hstack((np.cos(p_a),np.sin(p_a)))*prey_v
         self.agents_pos = agents_next_pos
         self.prey_pos   = prey_next_pos
         agents_rewards,\
