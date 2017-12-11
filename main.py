@@ -1,51 +1,37 @@
 import tensorflow as tf
 import numpy as np
 import matplotlib.pyplot as plt
-import sys
-sys.path.insert(1,'env/')
-from env import envs
+from env import Environ
 from maddpg import MaDDPG
 
-state_dim = 5
-action_dim = 1
+agent_state_dim = 4
+agent_action_dim = 1
 max_edge= 1
 
 num_agents = 3
-maddpg = MaDDPG(num_agents,state_dim, action_dim)
+maddpg = MaDDPG(num_agents,agent_state_dim, agent_action_dim)
 
-Env = envs.Environ(num_agents,max_edge)
-obs = Env.reset()
-current_state = obs
+Env = Environ(num_agents, render=False)
 
 max_episode = 1000000
-done_epoch = 0
 #print(current_state)
 max_epoch = 1000
 
-catch_time = []
-
 for episode in range(max_episode):
     print('episode',episode)
-    #while (True):
-        #Env.re_create_env(num_agents)
-    current_state = Env.reset()
-        #action = maddpg.noise_action(current_state)
-        #next_state, reward, done = Env.step(action)
-        #print(reward)
-       # if not done:
-       #    current_state = next_state
-       #      break
+    agents_state, prey_state = Env.reset()
 
     for epoch in range(max_epoch):
         #print('epoch',epoch)
         #Env.render()
-        action = maddpg.noise_action(current_state)
         #print(action)
-        next_state, reward, done = Env.step(action)
-        maddpg.perceive(current_state,action,reward,next_state,done)
-        current_state = next_state
+        agents_action = maddpg.noise_action(agents_state)
+        agents_next_state, prey_next_state, agents_reward, prey_reward, done = Env.step(agents_action, 0)
+
+        maddpg.perceive(agents_state, agents_action, agents_reward, agents_next_state,done)
+        agents_state = agents_next_state
         if done:
-            print('Done!!!!!!!!!!!! at epoch{} , reward:{}'.format(epoch,reward))
+            print('Done!!!!!!!!!!!! at epoch{} , reward:{}'.format(epoch,agents_reward))
             # add summary for each episode
             maddpg.summary(episode)
             break
