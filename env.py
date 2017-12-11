@@ -12,8 +12,8 @@ class Environ:
     def __init__(self,num_agents,render=False):
         self.num_agents = num_agents
         self.dorender = render
-        self.agent_state_dim = 4
-        self.prey_state_dim = 2*self.num_agents+2
+        self.agent_state_dim = 5
+        self.prey_state_dim = 2*self.num_agents+2+self.num_agents
         if render:
             self.init_render()
 
@@ -77,8 +77,8 @@ class Environ:
         self.ax = self.fig.add_subplot(111)
         #self.ax.axis('equal')
         # particles holds the locations of the particles
-        self.agents_sc = self.ax.scatter([], [], s=15 ** 2)
-        self.prey_sc = self.ax.scatter([], [], s=15 ** 2)
+        self.agents_sc = self.ax.scatter([], [], s=25 ** 2)
+        self.prey_sc = self.ax.scatter([], [], s=25 ** 2)
         # particles.set_xdata()
         # particles.set_ydata()
         self.ax.set_xlim([-1, 1])
@@ -92,9 +92,12 @@ class Environ:
     def pos2obs(self,agents_pos, prey_pos):
         agents_obs = np.zeros((self.num_agents,self.agent_state_dim))
         prey_obs  = np.zeros((1,self.prey_state_dim))
+        theta = np.zeros((1,self.num_agents))
         for ii in range(self.num_agents):
-            agents_obs[ii,:] = np.hstack((np.reshape(agents_pos[ii,:],(1,2)),prey_pos))
-        prey_obs = np.hstack((np.reshape(agents_pos[:],(1,-1)),prey_pos))
+            theta[0,ii] = np.arctan2(prey_pos[0,1]-agents_pos[ii,1],prey_pos[0,0]-agents_pos[ii,0])
+            agents_obs[ii,:] = np.hstack((np.reshape(agents_pos[ii,:],(1,2)),prey_pos,np.reshape(theta[0,ii],(1,1))))
+
+        prey_obs = np.hstack((np.reshape(agents_pos[:],(1,-1)),prey_pos,theta))
 
         return agents_obs, prey_obs
 
