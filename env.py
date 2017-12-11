@@ -2,14 +2,18 @@ import numpy as np
 import matplotlib.pyplot as plt
 # the world dimension is fixed, from [-1,1]
 agent_v = .05
-prey_v = .05
+prey_v = .005
 agent_r = .1
 prey_r = .1
+
+
 
 class Environ:
     def __init__(self,num_agents,render=False):
         self.num_agents = num_agents
         self.dorender = render
+        self.agent_state_dim = 4
+        self.prey_state_dim = 2*self.num_agents+2
         if render:
             self.init_render()
 
@@ -24,7 +28,8 @@ class Environ:
 
         self.agents_pos = agents_pos
         self.prey_pos = prey_pos
-        return agents_pos, prey_pos
+        agents_obs, prey_obs = self.pos2obs(agents_pos, prey_pos)
+        return agents_obs, prey_obs
 
     def step(self,agents_action, prey_action):
         agents_action *=np.pi
@@ -39,7 +44,8 @@ class Environ:
         if self.dorender:
             self.render()
 
-        return agents_next_pos, prey_next_pos, agents_rewards, prey_reward,done
+        agents_obs, prey_obs = self.pos2obs(agents_next_pos, prey_next_pos)
+        return agents_obs, prey_obs, agents_rewards, prey_reward,done
 
     def rewards(self,agents_pos, prey_pos):
         done = False
@@ -82,6 +88,15 @@ class Environ:
         self.agents_sc.set_offsets(self.agents_pos)
         self.prey_sc.set_offsets(self.prey_pos)
         plt.pause(1e-100)
+
+    def pos2obs(self,agents_pos, prey_pos):
+        agents_obs = np.zeros((self.num_agents,self.agent_state_dim))
+        prey_obs  = np.zeros((1,self.prey_state_dim))
+        for ii in range(self.num_agents):
+            agents_obs[ii,:] = np.hstack((np.reshape(agents_pos[ii,:],(1,2)),prey_pos))
+        prey_obs = np.hstack((np.reshape(agents_pos[:],(1,-1)),prey_pos))
+
+        return agents_obs, prey_obs
 
 
 
