@@ -100,7 +100,7 @@ class Environ:
         self.prey_sc.set_offsets(self.prey_pos)
         plt.pause(1e-100)
         if self.savefig:
-            plt.savefig('./images/'+'ani'+str(self.steps)+'.jpg', bbox_inchs='tight')
+            plt.savefig('./images/'+'ani_'+str(self.steps)+'.jpg', bbox_inchs='tight')
 
     def pos2obs(self,agents_pos, prey_pos):
         agents_obs = np.zeros((self.num_agents,self.agent_state_dim))
@@ -119,11 +119,16 @@ class Environ:
         # Note: endwiths can be changes to load other image types
         path = './images'
         file_names = sorted((fn for fn in os.listdir(path) if fn.endswith('.png') or fn.endswith('.jpg')))
+        list.sort(file_names, key=lambda x: int(x.split('_')[1].split('.')[0]))
 
         images = []
         for filename in file_names:
             images.append(imageio.imread(path+'/'+filename))
         imageio.mimsave('replay.gif', images, duration=0.2)
+
+        # delete all the images in directory
+        for filename in file_names:
+            os.remove(path+'/'+filename)
 
 
 
