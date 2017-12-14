@@ -1,5 +1,10 @@
 import numpy as np
 import matplotlib.pyplot as plt
+import imageio
+import os
+
+
+
 # the world dimension is fixed, from [-1,1]
 agent_v = .05
 prey_v = .03
@@ -9,9 +14,11 @@ prey_r = .1
 
 
 class Environ:
-    def __init__(self,num_agents,render=False):
+    def __init__(self,num_agents,render=False,savefig = False):
+        self.steps =0
         self.num_agents = num_agents
         self.dorender = render
+        self.savefig = savefig
         self.agent_state_dim = 5
         self.prey_state_dim = 2*self.num_agents+2+self.num_agents
         if render:
@@ -32,6 +39,7 @@ class Environ:
         return agents_obs, prey_obs
 
     def step(self,agents_action, prey_action):
+        self.steps +=1
         a_a = agents_action * np.pi
         p_a =  prey_action*np.pi
         agents_next_pos = self.agents_pos + np.hstack((np.cos(a_a),np.sin(a_a)))*agent_v
@@ -77,6 +85,9 @@ class Environ:
         self.ax = self.fig.add_subplot(111)
         #self.ax.axis('equal')
         # particles holds the locations of the particles
+        self.ax.get_xaxis().set_visible(False)
+        self.ax.get_yaxis().set_visible(False)
+
         self.agents_sc = self.ax.scatter([], [], s=25 ** 2)
         self.prey_sc = self.ax.scatter([], [], s=25 ** 2)
         # particles.set_xdata()
@@ -88,6 +99,8 @@ class Environ:
         self.agents_sc.set_offsets(self.agents_pos)
         self.prey_sc.set_offsets(self.prey_pos)
         plt.pause(1e-100)
+        if self.savefig:
+            plt.savefig('./images/'+'ani'+str(self.steps)+'.jpg', bbox_inchs='tight')
 
     def pos2obs(self,agents_pos, prey_pos):
         agents_obs = np.zeros((self.num_agents,self.agent_state_dim))
@@ -101,8 +114,16 @@ class Environ:
 
         return agents_obs, prey_obs
 
+    def gen_gif(self):
+        # Stores a name-list of jpg and png files into the variable file_names.
+        # Note: endwiths can be changes to load other image types
+        path = './images'
+        file_names = sorted((fn for fn in os.listdir(path) if fn.endswith('.png') or fn.endswith('.jpg')))
 
-
+        images = []
+        for filename in file_names:
+            images.append(imageio.imread(path+'/'+filename))
+        imageio.mimsave('replay.gif', images, duration=0.2)
 
 
 
