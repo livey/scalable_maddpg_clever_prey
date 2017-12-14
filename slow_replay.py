@@ -1,41 +1,44 @@
 import numpy as np
 import time
-import sys
-sys.path.insert(1,'env/')
-from env import envs
 from maddpg import MaDDPG
+from env import Environ
 
-# load the pre-trained network and plays the video slowly
-state_dim = 5
-action_dim = 1
-max_edge=1
+agent_state_dim = 5
+agent_action_dim = 1
 
 num_agents = 3
-maddpg = MaDDPG(num_agents,state_dim, action_dim)
+maddpg = MaDDPG(num_agents,agent_state_dim, agent_action_dim)
 
-# load saved network
+
 maddpg.load_network()
 
-Env = envs.Environ(num_agents,max_edge)
-obs = Env.reset()
-current_state = obs
-max_time = 10000
+Env = Environ(num_agents, render=True, savefig= True)
+
+max_episode = 10
 #print(current_state)
-for epoch in range(max_time):
-    print('epoch',epoch)
-    action = maddpg.action(current_state)
-    #print(action)
-    next_state, reward, done = Env.step(action)
-    #print(reward)
-    #maddpg.perceive(current_state,action,reward,next_state,done)
-    current_state = next_state
-    if done:
-        print('done!!!!, reward : {}'.format(reward))
-        #Env.re_create_env(num_agents)
-        current_state = Env.reset()
+max_epoch = 1000
 
-    Env.render()
-    time.sleep(.2)
+for episode in range(max_episode):
+    print('episode',episode)
+    agents_state, prey_state = Env.reset()
 
-maddpg.close_session()
+    for epoch in range(max_epoch):
+        agents_action = maddpg.noise_action(agents_state)
+        prey_action = np.random.uniform(-1, 1)
+
+        agents_next_state, prey_next_state, agents_reward, prey_reward, done = Env.step(agents_action, prey_action)
+        # pause to show the image
+        time.sleep(.2)
+
+        maddpg.perceive(agents_state, agents_action, agents_reward, agents_next_state,done)
+        agents_state = agents_next_state
+        if done:
+            print('Done!!!!!!!!!!!! at epoch{} , reward:{}'.format(epoch,agents_reward))
+            # add summary for each episode
+            maddpg.summary(episode)
+            break
+    if epoch ==max_epoch-1:
+        print('Time up >>>>>>>>>>>>>>')
+
+Env.gen_gif()
 

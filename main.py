@@ -11,10 +11,10 @@ max_edge= 1
 num_agents = 3
 maddpg = MaDDPG(num_agents,agent_state_dim, agent_action_dim)
 
-Env = Environ(num_agents, render=True )
+Env = Environ(num_agents, render=False, savefig=False)
 
 max_episode = 1000000
-#print(current_state)
+
 max_epoch = 1000
 
 for episode in range(max_episode):
@@ -22,9 +22,7 @@ for episode in range(max_episode):
     agents_state, prey_state = Env.reset()
 
     for epoch in range(max_epoch):
-        #print('epoch',epoch)
-        #Env.render()
-        #print(action)
+
         agents_action = maddpg.noise_action(agents_state)
         prey_action = np.random.uniform(-1, 1)
 
