@@ -37,6 +37,7 @@ for episode in range(max_episode):
         prey_action = preyddpg.action(prey_state)
 
         agents_next_state, prey_next_state, agents_reward, prey_reward, done = Env.step(agents_action, prey_action)
+        time.sleep(0.2)
 
         agents_state = agents_next_state
         prey_state   = prey_next_state
