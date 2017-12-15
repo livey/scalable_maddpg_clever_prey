@@ -7,7 +7,7 @@ import os
 
 # the world dimension is fixed, from [-1,1]
 agent_v = .03
-prey_v = .05
+prey_v = .03
 agent_r = .1
 prey_r = .1
 
@@ -117,6 +117,9 @@ class Environ:
     def gen_gif(self):
         # Stores a name-list of jpg and png files into the variable file_names.
         # Note: endwiths can be changes to load other image types
+        if not self.dorender or not self.savefig:
+            return
+        
         path = './images'
         file_names = sorted((fn for fn in os.listdir(path) if fn.endswith('.png') or fn.endswith('.jpg')))
         list.sort(file_names, key=lambda x: int(x.split('_')[1].split('.')[0]))
