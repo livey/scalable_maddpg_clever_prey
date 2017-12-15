@@ -1,7 +1,7 @@
 import tensorflow as tf
 import numpy as np
-from actor_network import ActorNetwork
-from critic_network import CriticNetwork
+from agent_actor_network import ActorNetwork
+from agent_critic_network import CriticNetwork
 from ou_noise import OUNoise
 from replay_buffer import ReplayBuffer
 
@@ -19,12 +19,13 @@ SAVE_STEPS = 10000
 SUMMARY_BATCH_SIZE = 512
 
 class MaDDPG:
-    def __init__(self,num_agents,state_dim,action_dim):
+    def __init__(self,sess, num_agents=3 ,state_dim=5,action_dim=1):
         # track training times
         self.time_step = 0
         # use set session use GPU
         #self.sess = tf.InteractiveSession()
-        self.sess = tf.Session(config=tf.ConfigProto(log_device_placement=True))
+        #self.sess = tf.Session(config=tf.ConfigProto(log_device_placement=True))
+        self.sess = sess
         self.num_agents = num_agents
         self.state_dim = state_dim
         self.action_dim = action_dim
@@ -34,7 +35,7 @@ class MaDDPG:
         self.exploration_noise = OUNoise((self.num_agents,action_dim))
         self.replay_buffer = ReplayBuffer(REPLAY_BUFFER_SIZE)
         # for store checkpoint
-        self.saver = tf.train.Saver()
+
 
     def train(self):
         minibatch = self.replay_buffer.get_batch(BATCH_SIZE)
@@ -169,8 +170,6 @@ class MaDDPG:
         if self.replay_buffer.count() > REPLAY_START_SIZE:
             self.time_step += 1
             self.train()
-            if self.time_step%SAVE_STEPS == 0:
-                self.save_network()
             # if self.time_step % 10000 == 0:
             # self.actor_network.save_network(self.time_step)
             # self.critic_network.save_network(self.time_step)
@@ -179,16 +178,4 @@ class MaDDPG:
         if done:
             self.exploration_noise.reset()
 
-    def load_network(self):
-        checkpoint = tf.train.get_checkpoint_state("saved_network")
-        if checkpoint and checkpoint.model_checkpoint_path:
-            self.saver.restore(self.sess, checkpoint.model_checkpoint_path)
-            print("Successfully loaded:", checkpoint.model_checkpoint_path)
-        else:
-            print('Could not find old network weights')
 
-    def save_network(self):
-        # do not processing under Dropbox
-        #  exit drop box then run
-        print('save network...',self.time_step)
-        self.saver.save(self.sess, 'saved_network/' + 'network', global_step=self.time_step)

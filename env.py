@@ -6,8 +6,8 @@ import os
 
 
 # the world dimension is fixed, from [-1,1]
-agent_v = .05
-prey_v = .03
+agent_v = .03
+prey_v = .05
 agent_r = .1
 prey_r = .1
 
