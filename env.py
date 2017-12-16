@@ -68,7 +68,7 @@ class Environ:
                 prey_reward = 10
 
         if np.abs(prey_pos[0,0])>1 or np.abs(prey_pos[0,1])>1:
-            prey_reward = 0.1
+            prey_reward = -1
             done = True
         # whether collide
         for ii in range(self.num_agents):
