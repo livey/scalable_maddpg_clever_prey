@@ -4,16 +4,13 @@ import math
 
 # target updating rate
 TAU = .001
-L2 = .0001
+L2 = .00001
 LEARNING_RATE = 1e-3
-preLayer1Size = 20
-preLayer2Size = 10
-sufLayerSize = 5
 
 Layer1_size = 10
 Layer2_size = 10
 Layer3_size = 10
-Layer4_size = 10
+Layer4_size = 5
 
 SUMMARY_DIR ='summaries/'
 
@@ -51,7 +48,7 @@ class CriticNetwork:
         self.update_target()
 
     def createQNetwork(self,stateDimension,actionDimension):
-        cell_units = preLayer2Size
+        
         with tf.variable_scope('prey_criticNetwork') as scope:
             # the input state training data  is batchSize*numOfAgents*stateDimension
             stateInputs = tf.placeholder('float',[None, stateDimension])
