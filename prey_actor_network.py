@@ -9,9 +9,10 @@ import numpy as np
 # create multiple instances
 # https://stackoverflow.com/questions/41709207/python-create-n-number-of-class-instances
 
-LAYER1_SIZE = 10
-LAYER2_SIZE = 10
+LAYER1_SIZE = 20
+LAYER2_SIZE = 15
 LAYER3_SIZE = 10
+LAYER4_SIZE = 10
 LEARNING_RATE = 1e-4
 
 # target updating rate
@@ -64,16 +65,22 @@ class ActorNetwork:
                                  initializer=tf.contrib.layers.xavier_initializer())
             b3 = tf.get_variable('b3',[LAYER3_SIZE],
                                  initializer=tf.contrib.layers.xavier_initializer())
-            W4 = tf.get_variable('W4',[LAYER3_SIZE,action_dim],
+            W4 = tf.get_variable('W4',[LAYER3_SIZE,LAYER4_SIZE],
                                  initializer=tf.contrib.layers.xavier_initializer())
-            b4 = tf.get_variable('b4',[action_dim],
+            b4 = tf.get_variable('b4',[LAYER4_SIZE],
+                                 initializer=tf.contrib.layers.xavier_initializer())
+
+            W5 = tf.get_variable('W5', [LAYER4_SIZE, action_dim],
+                                 initializer=tf.contrib.layers.xavier_initializer())
+            b5 = tf.get_variable('b5', [action_dim],
                                  initializer=tf.contrib.layers.xavier_initializer())
 
             layer1 = tf.nn.relu(tf.matmul(state_input,W1)+b1)
             layer2 = tf.nn.relu(tf.matmul(layer1, W2)+b2)
             layer3 = tf.nn.relu(tf.matmul(layer2, W3)+b3)
+            layer4 = tf.nn.relu(tf.matmul(layer3, W4)+b4)
 
-            action_output = tf.tanh(tf.matmul(layer3,W4)+b4)
+            action_output = tf.tanh(tf.matmul(layer4,W5)+b5)
 
         nets = tf.get_collection(tf.GraphKeys.GLOBAL_VARIABLES, scope=self.agent_name)
         return state_input, action_output,nets
