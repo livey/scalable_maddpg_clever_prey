@@ -14,7 +14,7 @@ GAMMA = 0.99
 BATCH_SIZE = 64
 
 REPLAY_BUFFER_SIZE = 1000000
-REPLAY_START_SIZE = 1000
+REPLAY_START_SIZE = 100
 SAVE_STEPS = 10000
 SUMMARY_BATCH_SIZE = 512
 
@@ -29,7 +29,7 @@ class PreyDDPG:
         self.num_agents = num_agents
         self.state_dim = state_dim
         self.action_dim = action_dim
-        self.agents = self.create_multi_agents(self.sess,num_agents,self.state_dim,self.action_dim)
+        self.agents = ActorNetwork(sess,state_dim, action_dim, agent_name = 'prey')
         # make sure create Criticnetwork later, summarise mean Q value inside
         self.critic = CriticNetwork(self.sess,state_dim,action_dim)
         self.exploration_noise = OUNoise((self.num_agents,action_dim))
@@ -39,27 +39,27 @@ class PreyDDPG:
 
     def train(self):
         minibatch = self.replay_buffer.get_batch(BATCH_SIZE)
-        state_batch = np.zeros((BATCH_SIZE,self.num_agents,self.state_dim))
-        action_batch = np.zeros((BATCH_SIZE,self.num_agents,self.action_dim))
-        reward_batch = np.zeros((BATCH_SIZE,self.num_agents))
-        next_state_batch = np.zeros((BATCH_SIZE,self.num_agents,self.state_dim))
+        state_batch = np.zeros((BATCH_SIZE,self.state_dim))
+        action_batch = np.zeros((BATCH_SIZE,self.action_dim))
+        reward_batch = np.zeros((BATCH_SIZE))
+        next_state_batch = np.zeros((BATCH_SIZE,self.state_dim))
         done_batch = np.zeros((BATCH_SIZE))
         for ii in range(BATCH_SIZE):
-            state_batch[ii,:,:] = minibatch[ii][0]
-            action_batch[ii,:,:] = minibatch[ii][1]
-            reward_batch[ii,:]  = minibatch[ii][2]
-            next_state_batch[ii,:,:] = minibatch[ii][3]
+            state_batch[ii,:] = minibatch[ii][0]
+            action_batch[ii,:] = minibatch[ii][1]
+            reward_batch[ii]  = minibatch[ii][2]
+            next_state_batch[ii,:] = minibatch[ii][3]
             done_batch[ii] = minibatch[ii][4]
 
         # calculate Gt batch
         next_action_batch = self.target_actions(next_state_batch)
         q_value_batch = self.critic.target_q(next_state_batch,next_action_batch)
-        gt = np.zeros((BATCH_SIZE,self.num_agents))
+        gt = np.zeros((BATCH_SIZE))
         for ii in range(BATCH_SIZE):
             if done_batch[ii]:
-                gt[ii,:] = reward_batch[ii,:]
+                gt[ii] = reward_batch[ii]
             else:
-                gt[ii,:] = reward_batch[ii,:] + GAMMA*q_value_batch[ii,:]
+                gt[ii] = reward_batch[ii] + GAMMA*q_value_batch[ii,:]
         #update critic by minimizing the loss
         self.critic.train(gt,state_batch,action_batch)
 
@@ -87,16 +87,12 @@ class PreyDDPG:
 
 
     def update_agents_target(self):
-        for agent in self.agents:
-            agent.update_target()
+        self.agents.update_target()
 
     def train_agents(self,gradients_batch,state_batch):
         # gradients_batch = [batchsize* agents* action_dim]
         # state_batch = [batchsize* agents * state_dim ]
-        for ii in range(self.num_agents):
-            grad = gradients_batch[:,ii,:]
-            state = state_batch[:,ii,:]
-            self.agents[ii].train(grad,state)
+        self.agents.train(gradients_batch,state_batch)
 
 
 
@@ -134,26 +130,27 @@ class PreyDDPG:
     def action(self,state): # here is action, for one state on agent, not batch_sized actions
         # state = [num_agents * state_dim]
         # actions = [num_agents *  action_dim]
-        action = np.zeros((self.num_agents,self.action_dim))
-        for ii in range(self.num_agents):
-            action[ii,:] = self.agents[ii].action(state[ii,:])
-        return action
+        # action = np.zeros((self.num_agents,self.action_dim))
+        # for ii in range(self.num_agents):
+        #     action[ii,:] = self.agents[ii].action(state[ii,:])
+        return self.agents.action(state)
 
     def actions(self,state_batch):
         #state = batch_size*numOfagents*state_dim
         #actions = batch_size*numOfagents*action_dim
-        batch_size = state_batch.shape[0]
-        actions = np.zeros((batch_size, self.num_agents, self.action_dim))
-        for ii in range(self.num_agents):
-            actions[:,ii,:] = self.agents[ii].actions(state_batch[:,ii,:])
-        return actions
+        # batch_size = state_batch.shape[0]
+        # actions = np.zeros((batch_size, self.num_agents, self.action_dim))
+        # for ii in range(self.num_agents):
+        #     actions[:,ii,:] = self.agents[ii].actions(state_batch[:,ii,:])
+        return self.agents.actions(state_batch)
+
 
     def target_actions(self,state_batch):
         # the state size  is batch_size* num_agents * state_dimension
-        actions = np.zeros((state_batch.shape[0],self.num_agents,self.action_dim))
-        for ii in range(self.num_agents):
-            actions[:,ii,:] = self.agents[ii].actions(state_batch[:,ii,:])
-        return  actions
+        # actions = np.zeros((state_batch.shape[0],self.num_agents,self.action_dim))
+        # for ii in range(self.num_agents):
+        #     actions[:,ii,:] = self.agents[ii].actions(state_batch[:,ii,:])
+        return  self.agents.target_actions(state_batch)
 
     def noise_action(self,state):
         action = self.action(state)

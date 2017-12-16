@@ -9,6 +9,12 @@ LEARNING_RATE = 1e-3
 preLayer1Size = 20
 preLayer2Size = 10
 sufLayerSize = 5
+
+Layer1_size = 10
+Layer2_size = 10
+Layer3_size = 10
+Layer4_size = 10
+
 SUMMARY_DIR ='summaries/'
 
 class CriticNetwork:
@@ -48,63 +54,40 @@ class CriticNetwork:
         cell_units = preLayer2Size
         with tf.variable_scope('prey_criticNetwork') as scope:
             # the input state training data  is batchSize*numOfAgents*stateDimension
-            stateInputs = tf.placeholder('float',[None,None,stateDimension])
+            stateInputs = tf.placeholder('float',[None, stateDimension])
             # the input action training data is batchSize*numOfAgents*stateDimension
-            actionInputs = tf.placeholder('float',[None,None,actionDimension])
-            # get the batch size, and numOfAgents
-            batchSize = tf.shape(stateInputs)[0]
-            numOfAgents = tf.shape(stateInputs)[1]
+            actionInputs = tf.placeholder('float',[None, actionDimension])
 
-            # construct the input DNN for bidirectional LSTM
-            # reshape the input data with size (batchSize*NumOfAgents)*featureDimension
-            inputDNNstate  = tf.reshape(stateInputs,[-1,stateDimension])
-            inputDNNaction = tf.reshape(actionInputs,[-1,actionDimension])
-            preW1S = tf.get_variable('preW1S',[stateDimension,preLayer1Size],
-                                     initializer=tf.contrib.layers.xavier_initializer())
-            preB1S = tf.get_variable('preB1S',[preLayer1Size],
-                                     initializer=tf.contrib.layers.xavier_initializer())
-            preW2S = tf.get_variable('preW2S',[preLayer1Size,preLayer2Size],
-                                     initializer=tf.contrib.layers.xavier_initializer())
-            preW2A = tf.get_variable('preW2A',[actionDimension,preLayer2Size],
-                                     initializer=tf.contrib.layers.xavier_initializer())
-            preB2  = tf.get_variable('preB2',[preLayer2Size],
-                                     initializer=tf.contrib.layers.xavier_initializer())
-            preLayer1 = tf.nn.relu(tf.matmul(inputDNNstate,preW1S)+preB1S)
-            preLayer2 = tf.nn.relu(tf.matmul(preLayer1,preW2S)
-                                   +tf.matmul(inputDNNaction,preW2A)
-                                   +preB2)
-            lstmInputs = tf.reshape(preLayer2,[batchSize,numOfAgents,preLayer2Size])
+            W1 = tf.get_variable('W1', [self.stateDimension, Layer1_size],
+                                 initializer=tf.contrib.layers.xavier_initializer())
+            b1 = tf.get_variable('b1', [Layer1_size],
+                                 initializer=tf.contrib.layers.xavier_initializer())
 
-            # construct the bidirectional LSTM
-            # make sure each epoch the init sate is set to be zero
-            #https://stackoverflow.com/questions/38441589/is-rnn-initial-state-reset-for-subsequent-mini-batches/41239965#41239965
-            with tf.variable_scope('forward_lstm'):
-                lstm_forward_cell = tf.nn.rnn_cell.BasicLSTMCell(cell_units)
-            with tf.variable_scope('backward_lstm'):
-                lstm_backward_cell = tf.nn.rnn_cell.BasicLSTMCell(cell_units)
+            W2 = tf.get_variable('W2', [Layer1_size, Layer2_size],
+                                 initializer=tf.contrib.layers.xavier_initializer())
+            b2 = tf.get_variable('b2', [Layer2_size],
+                                 initializer=tf.contrib.layers.xavier_initializer())
+            W3 = tf.get_variable('W3', [Layer2_size,Layer3_size],
+                                 initializer=tf.contrib.layers.xavier_initializer())
+            b3 = tf.get_variable('b3', [Layer3_size],
+                                 initializer=tf.contrib.layers.xavier_initializer())
+            action_W3 = tf.get_variable('action_W3', [actionDimension,Layer3_size],
+                                 initializer=tf.contrib.layers.xavier_initializer())
 
-            (outputs, output_state) = tf.nn.bidirectional_dynamic_rnn(
-                lstm_forward_cell,
-                lstm_backward_cell,
-                lstmInputs,
-                dtype='float',
-                #initial_state_fw=initial_lstm_state_forward_input,
-                #initial_state_bw=initial_lstm_state_backward_input,
-                #sequence_length=step_size,
-                time_major=False,
-                scope=scope)
-            first_layer_output = tf.reshape(outputs[0],[-1,cell_units])
-            second_layer_output = tf.reshape(outputs[1],[-1,cell_units])
-            suf_w1 = tf.get_variable('suf_w1',[cell_units,1],
-                                     initializer=tf.contrib.layers.xavier_initializer())
-            suf_w2 = tf.get_variable('suf_w2',[cell_units,1],
-                                     initializer=tf.contrib.layers.xavier_initializer())
-            suf_b  = tf.get_variable('suf_b',initializer=tf.random_uniform([1],-3e-3,3e-3))
+            W4 = tf.get_variable('W4', [Layer3_size, Layer4_size],
+                                 initializer=tf.contrib.layers.xavier_initializer())
 
-            q_value1 = tf.identity(tf.matmul(first_layer_output,suf_w1)
-                                  +tf.matmul(second_layer_output,suf_w2)
-                                  +suf_b)
-            q_value = tf.reshape(q_value1,[batchSize,-1])
+            b4 = tf.get_variable('b4', [Layer4_size],
+                                 initializer=tf.contrib.layers.xavier_initializer())
+            W5 = tf.get_variable('W5', [Layer4_size, 1],
+                                 initializer=tf.contrib.layers.xavier_initializer())
+            b5 = tf.get_variable('b5', [1],
+                                 initializer=tf.contrib.layers.xavier_initializer())
+            layer1 = tf.nn.relu(tf.matmul(stateInputs,W1)+b1)
+            layer2 = tf.nn.relu(tf.matmul(layer1,W2)+b2)
+            layer3 = tf.nn.relu(tf.matmul(layer2,W3)+tf.matmul(actionInputs,action_W3)+b3)
+            layer4 = tf.nn.relu(tf.matmul(layer3,W4)+b4)
+            q_value = tf.identity(tf.matmul(layer4,W5)+b5)
 
         nets = tf.get_collection(tf.GraphKeys.GLOBAL_VARIABLES, scope='prey_criticNetwork')
         return stateInputs, actionInputs, q_value, nets
@@ -137,7 +120,7 @@ class CriticNetwork:
 
     def create_training_method(self):
         # the expected size of Rt is batch_size* agents
-        self.Rt = tf.placeholder('float', [None, None])
+        self.Rt = tf.placeholder('float', [None])
         weight_decay = tf.add_n([L2 * tf.nn.l2_loss(var) for var in self.nets])
         self.cost = tf.reduce_mean(tf.square(self.Rt - self.q_value_outputs)) + weight_decay
         self.optimizer = tf.train.AdamOptimizer(LEARNING_RATE).minimize(self.cost)
@@ -158,7 +141,7 @@ class CriticNetwork:
     def target_q(self,state_batch,action_batch):
         return self.sess.run(
             self.target_q_value_outputs, feed_dict={
-            self.stateInputs: state_batch,
+            self.stateInputs:  state_batch,
             self.actionInputs: action_batch})
 
     def printnets(self):

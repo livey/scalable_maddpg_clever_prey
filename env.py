@@ -110,7 +110,7 @@ class Environ:
             theta[0,ii] = np.arctan2(prey_pos[0,1]-agents_pos[ii,1],prey_pos[0,0]-agents_pos[ii,0])
             agents_obs[ii,:] = np.hstack((np.reshape(agents_pos[ii,:],(1,2)),prey_pos,np.reshape(theta[0,ii],(1,1))))
 
-        prey_obs = np.hstack((np.reshape(agents_pos[:],(1,-1)),prey_pos,theta))
+        prey_obs = np.squeeze(np.hstack((np.reshape(agents_pos,(1,-1)),prey_pos,theta)))
 
         return agents_obs, prey_obs
 
