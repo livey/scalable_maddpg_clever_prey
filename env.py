@@ -7,7 +7,7 @@ import os
 
 # the world dimension is fixed, from [-1,1]
 agent_v = .1
-prey_v = .1
+prey_v = .12
 agent_r = .1
 prey_r = .1
 
@@ -41,9 +41,12 @@ class Environ:
     def step(self,agents_action, prey_action):
         self.steps +=1
         a_a = agents_action * np.pi
-        p_a =  prey_action*np.pi
+        p_a = prey_action[0,0]*np.pi
+        # velocity
+        p_v = prey_action[0,1]*prey_v
+
         agents_next_pos = self.agents_pos + np.hstack((np.cos(a_a),np.sin(a_a)))*agent_v
-        prey_next_pos = self.prey_pos + np.hstack((np.cos(p_a),np.sin(p_a)))*prey_v
+        prey_next_pos = self.prey_pos + np.hstack((np.cos(p_a),np.sin(p_a)))*p_v
         self.agents_pos = agents_next_pos
         self.prey_pos   = prey_next_pos
         agents_rewards,\
@@ -68,7 +71,7 @@ class Environ:
                 prey_reward = 10
 
         if np.abs(prey_pos[0,0])>1 or np.abs(prey_pos[0,1])>1:
-            prey_reward = 0
+            prey_reward = -1
             done = True
         # whether collide
         for ii in range(self.num_agents):
