@@ -13,7 +13,7 @@ agent_state_dim = 5
 agent_action_dim = 1
 num_agents = 3
 Save_Step = 4000
-max_episode = 10
+max_episode = 100
 max_epoch = 1000
 
 sess = tf.InteractiveSession()
@@ -23,7 +23,7 @@ preyddpg = PreyDDPG(sess)
 networks = NetworkManual(sess)
 
 networks.load_network()
-Env = Environ(num_agents, render=True, savefig=True)
+Env = Environ(num_agents, render=True, savefig=False)
 
 
 for episode in range(max_episode):
@@ -51,4 +51,4 @@ for episode in range(max_episode):
         print('Time up >>>>>>>>>>>>>>')
 
 sess.close()
-Env.gen_gif()
+#Env.gen_gif()
