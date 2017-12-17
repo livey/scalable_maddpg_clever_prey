@@ -14,12 +14,12 @@ GAMMA = 0.99
 BATCH_SIZE = 64
 
 REPLAY_BUFFER_SIZE = 1000000
-REPLAY_START_SIZE = 1000
+REPLAY_START_SIZE = 10000
 SAVE_STEPS = 10000
 SUMMARY_BATCH_SIZE = 512
 
 class PreyDDPG:
-    def __init__(self,sess, num_agents=1,state_dim=11,action_dim=1):
+    def __init__(self,sess, num_agents=1,state_dim=11,action_dim=2):
         # track training times
         self.time_step = 0
         # use set session use GPU
@@ -32,7 +32,7 @@ class PreyDDPG:
         self.agents = ActorNetwork(sess,state_dim, action_dim, agent_name = 'prey')
         # make sure create Criticnetwork later, summarise mean Q value inside
         self.critic = CriticNetwork(self.sess,state_dim,action_dim)
-        self.exploration_noise = OUNoise((self.num_agents,action_dim), sigma=0.05)
+        self.exploration_noise = OUNoise((self.num_agents,action_dim), sigma=0.1)
         self.replay_buffer = ReplayBuffer(REPLAY_BUFFER_SIZE)
         # for store checkpoint
         #self.saver = tf.train.Saver()
