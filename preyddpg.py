@@ -14,7 +14,7 @@ GAMMA = 0.99
 BATCH_SIZE = 64
 
 REPLAY_BUFFER_SIZE = 1000000
-REPLAY_START_SIZE = 100
+REPLAY_START_SIZE = 1000
 SAVE_STEPS = 10000
 SUMMARY_BATCH_SIZE = 512
 
@@ -32,7 +32,7 @@ class PreyDDPG:
         self.agents = ActorNetwork(sess,state_dim, action_dim, agent_name = 'prey')
         # make sure create Criticnetwork later, summarise mean Q value inside
         self.critic = CriticNetwork(self.sess,state_dim,action_dim)
-        self.exploration_noise = OUNoise((self.num_agents,action_dim))
+        self.exploration_noise = OUNoise((self.num_agents,action_dim), sigma=0.05)
         self.replay_buffer = ReplayBuffer(REPLAY_BUFFER_SIZE)
         # for store checkpoint
         #self.saver = tf.train.Saver()
@@ -54,6 +54,8 @@ class PreyDDPG:
         # calculate Gt batch
         next_action_batch = self.target_actions(next_state_batch)
         q_value_batch = self.critic.target_q(next_state_batch,next_action_batch)
+        #print(q_value_batch)
+
         gt = np.zeros((BATCH_SIZE))
         for ii in range(BATCH_SIZE):
             if done_batch[ii]:
@@ -61,6 +63,7 @@ class PreyDDPG:
             else:
                 gt[ii] = reward_batch[ii] + GAMMA*q_value_batch[ii,:]
         #update critic by minimizing the loss
+
         self.critic.train(gt,state_batch,action_batch)
 
         # update policy using the sampling gradients
