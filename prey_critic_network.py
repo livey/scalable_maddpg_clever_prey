@@ -8,9 +8,11 @@ L2 = .00001
 LEARNING_RATE = 1e-3
 
 Layer1_size = 10
-Layer2_size = 10
-Layer3_size = 10
+Layer2_size = 5
+Layer3_size = 5
 Layer4_size = 5
+Layer5_size = 5
+Layer6_size = 5
 
 SUMMARY_DIR ='summaries/'
 
@@ -48,7 +50,7 @@ class CriticNetwork:
         self.update_target()
 
     def createQNetwork(self,stateDimension,actionDimension):
-        
+
         with tf.variable_scope('prey_criticNetwork') as scope:
             # the input state training data  is batchSize*numOfAgents*stateDimension
             stateInputs = tf.placeholder('float',[None, stateDimension])
@@ -76,15 +78,28 @@ class CriticNetwork:
 
             b4 = tf.get_variable('b4', [Layer4_size],
                                  initializer=tf.contrib.layers.xavier_initializer())
-            W5 = tf.get_variable('W5', [Layer4_size, 1],
+            W5 = tf.get_variable('W5', [Layer4_size, Layer5_size],
+                                  initializer=tf.contrib.layers.xavier_initializer())
+            b5 = tf.get_variable('b5', [Layer5_size],
+                                  initializer=tf.contrib.layers.xavier_initializer())
+
+            W6 = tf.get_variable('W6', [Layer5_size, Layer6_size],
                                  initializer=tf.contrib.layers.xavier_initializer())
-            b5 = tf.get_variable('b5', [1],
+            b6 = tf.get_variable('b6', [Layer6_size],
                                  initializer=tf.contrib.layers.xavier_initializer())
-            layer1 = tf.nn.relu(tf.matmul(stateInputs,W1)+b1)
-            layer2 = tf.nn.relu(tf.matmul(layer1,W2)+b2)
-            layer3 = tf.nn.relu(tf.matmul(layer2,W3)+tf.matmul(actionInputs,action_W3)+b3)
-            layer4 = tf.nn.relu(tf.matmul(layer3,W4)+b4)
-            q_value = tf.identity(tf.matmul(layer4,W5)+b5)
+            W7 = tf.get_variable('W7', [Layer6_size, 1],
+                                 initializer=tf.contrib.layers.xavier_initializer())
+            b7 = tf.get_variable('b7', [1],
+                                 initializer=tf.contrib.layers.xavier_initializer())
+
+            layer1 = tf.nn.selu(tf.matmul(stateInputs,W1)+b1)
+            layer2 = tf.nn.selu(tf.matmul(layer1,W2)+b2)
+            layer3 = tf.nn.selu(tf.matmul(layer2,W3)+tf.matmul(actionInputs,action_W3)+b3)
+            layer4 = tf.nn.selu(tf.matmul(layer3,W4)+b4)
+            layer5 = tf.nn.selu(tf.matmul(layer4, W5)+b5)
+            layer6 = tf.nn.selu(tf.matmul(layer5, W6)+b6)
+            q_value = tf.identity(tf.matmul(layer6,W7)+b7)
+
 
         nets = tf.get_collection(tf.GraphKeys.GLOBAL_VARIABLES, scope='prey_criticNetwork')
         return stateInputs, actionInputs, q_value, nets
@@ -122,6 +137,7 @@ class CriticNetwork:
         self.cost = tf.reduce_mean(tf.square(self.Rt - self.q_value_outputs)) + weight_decay
         self.optimizer = tf.train.AdamOptimizer(LEARNING_RATE).minimize(self.cost)
         mean_rewards = tf.reduce_mean(self.q_value_outputs)
+        #mean_rewards = self.q_value_outputs
         tf.summary.scalar('mean_Q_value', mean_rewards)
         self.action_gradients = tf.gradients(mean_rewards, self.actionInputs)
 
