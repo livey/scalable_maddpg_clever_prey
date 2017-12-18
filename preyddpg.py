@@ -32,7 +32,7 @@ class PreyDDPG:
         self.agents = ActorNetwork(sess,state_dim, action_dim, agent_name = 'prey')
         # make sure create Criticnetwork later, summarise mean Q value inside
         self.critic = CriticNetwork(self.sess,state_dim,action_dim)
-        self.exploration_noise = OUNoise((self.num_agents,action_dim), sigma=0.1)
+        self.exploration_noise = OUNoise((self.num_agents,action_dim), sigma=0.08)
         self.replay_buffer = ReplayBuffer(REPLAY_BUFFER_SIZE)
         # for store checkpoint
         #self.saver = tf.train.Saver()
@@ -158,7 +158,13 @@ class PreyDDPG:
     def noise_action(self,state):
         action = self.action(state)
         # clip the action, action \in [-1,+1]
-        return np.clip(action + self.exploration_noise.noise(), -1, 1)
+
+        action = action + self.exploration_noise.noise()
+
+        # circular angle help prevent overfitting to the -1 or +1.
+        action[0,0] = (action[0,0]+1)%2 -1
+        action[0,1] = np.clip(action[0,1],-1,1)
+        return action
 
     def close_session(self):
         self.sess.close()

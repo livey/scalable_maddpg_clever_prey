@@ -8,10 +8,10 @@ L2 = .00001
 LEARNING_RATE = 1e-3
 
 Layer1_size = 10
-Layer2_size = 5
-Layer3_size = 5
-Layer4_size = 5
-Layer5_size = 5
+Layer2_size = 10
+Layer3_size = 10
+Layer4_size = 10
+Layer5_size = 10
 Layer6_size = 5
 
 SUMMARY_DIR ='summaries/'
