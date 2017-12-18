@@ -17,7 +17,7 @@ max_episode = 1000000
 max_epoch = 1000
 
 sess = tf.InteractiveSession()
-
+#sess = tf.Session(config=tf.ConfigProto(log_device_placement=True))
 maddpg = MaDDPG(sess,num_agents,agent_state_dim)
 preyddpg = PreyDDPG(sess)
 networks = NetworkManual(sess)
