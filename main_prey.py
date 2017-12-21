@@ -11,7 +11,7 @@ from network_manual import NetworkManual
 agent_state_dim = 5
 agent_action_dim = 1
 prey_action_dim =2
-num_agents = 3
+num_agents = 2
 Save_Step = 4000
 max_episode = 1000000
 max_epoch = 1000
@@ -35,7 +35,7 @@ for episode in range(1,max_episode):
         #prey_action = np.random.uniform(-1, 1)
         prey_action = preyddpg.noise_action(prey_state)
         #print(preyddpg.action(prey_state))
-        print('state',prey_state)
+        #print('state',prey_state)
         print('action',preyddpg.action(prey_state))
 
         agents_next_state, prey_next_state, agents_reward, prey_reward, done = Env.step(agents_action, prey_action)
