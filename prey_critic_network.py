@@ -57,47 +57,53 @@ class CriticNetwork:
             # the input action training data is batchSize*numOfAgents*stateDimension
             actionInputs = tf.placeholder('float',[None, actionDimension])
 
-            W1 = tf.get_variable('W1', [self.stateDimension, Layer1_size],
-                                 initializer=tf.contrib.layers.xavier_initializer())
-            b1 = tf.get_variable('b1', [Layer1_size],
-                                 initializer=tf.contrib.layers.xavier_initializer())
+            W1 = tf.get_variable('W1', initializer=tf.random_uniform([self.stateDimension, Layer1_size],
+                                                         -1/math.sqrt(stateDimension),1/math.sqrt(stateDimension)))
+            b1 = tf.get_variable('b1', initializer=tf.random_uniform([Layer1_size],
+                                                         -1/math.sqrt(stateDimension),1/math.sqrt(stateDimension)))
+            W2 = tf.get_variable('W2',initializer=tf.random_uniform([Layer1_size, Layer2_size],
+                                                         -1/math.sqrt(Layer1_size),1/math.sqrt(Layer1_size)))
+            b2 = tf.get_variable('b2',initializer=tf.random_uniform([Layer2_size],
+                                                         -1/math.sqrt(Layer1_size),1/math.sqrt(Layer1_size)))
+            W3 = tf.get_variable('W3', initializer=tf.random_uniform([Layer2_size, Layer3_size],
+                                                         -1/math.sqrt(Layer2_size),1/math.sqrt(Layer2_size)))
+            b3 = tf.get_variable('b3', initializer=tf.random_uniform([Layer3_size],
+                                                         -1/math.sqrt(Layer2_size), 1/math.sqrt(Layer2_size)))
+            action_W3 = tf.get_variable('action_W3', initializer=tf.random_uniform([actionDimension,Layer3_size],
+                                                                       -1/math.sqrt(actionDimension),1/math.sqrt(actionDimension)))
 
-            W2 = tf.get_variable('W2', [Layer1_size, Layer2_size],
-                                 initializer=tf.contrib.layers.xavier_initializer())
-            b2 = tf.get_variable('b2', [Layer2_size],
-                                 initializer=tf.contrib.layers.xavier_initializer())
-            W3 = tf.get_variable('W3', [Layer2_size,Layer3_size],
-                                 initializer=tf.contrib.layers.xavier_initializer())
-            b3 = tf.get_variable('b3', [Layer3_size],
-                                 initializer=tf.contrib.layers.xavier_initializer())
-            action_W3 = tf.get_variable('action_W3', [actionDimension,Layer3_size],
-                                 initializer=tf.contrib.layers.xavier_initializer())
+            W4 = tf.get_variable('W4', initializer=tf.random_uniform([Layer3_size, Layer4_size],
+                                                         -1/math.sqrt(Layer3_size),1/math.sqrt(Layer3_size)))
 
-            W4 = tf.get_variable('W4', [Layer3_size, Layer4_size],
-                                 initializer=tf.contrib.layers.xavier_initializer())
+            b4 = tf.get_variable('b4', initializer=tf.random_uniform([Layer4_size],
+                                                         -1/math.sqrt(Layer3_size),1/math.sqrt(Layer3_size)))
 
-            b4 = tf.get_variable('b4', [Layer4_size],
-                                 initializer=tf.contrib.layers.xavier_initializer())
-            W5 = tf.get_variable('W5', [Layer4_size, Layer5_size],
-                                  initializer=tf.contrib.layers.xavier_initializer())
-            b5 = tf.get_variable('b5', [Layer5_size],
-                                  initializer=tf.contrib.layers.xavier_initializer())
+            W5 = tf.get_variable('W5', initializer=tf.random_uniform([Layer4_size, Layer5_size],
+                                                         -1/math.sqrt(Layer4_size),1/math.sqrt(Layer4_size)))
 
-            W6 = tf.get_variable('W6', [Layer5_size, Layer6_size],
-                                 initializer=tf.contrib.layers.xavier_initializer())
-            b6 = tf.get_variable('b6', [Layer6_size],
-                                 initializer=tf.contrib.layers.xavier_initializer())
-            W7 = tf.get_variable('W7', [Layer6_size, 1],
-                                 initializer=tf.contrib.layers.xavier_initializer())
-            b7 = tf.get_variable('b7', [1],
-                                 initializer=tf.contrib.layers.xavier_initializer())
+            b5 = tf.get_variable('b5', initializer=tf.random_uniform([Layer5_size],
+                                                         -1/math.sqrt(Layer4_size),1/math.sqrt(Layer4_size)))
 
-            layer1 = tf.nn.selu(tf.matmul(stateInputs,W1)+b1)
-            layer2 = tf.nn.selu(tf.matmul(layer1,W2)+b2)
-            layer3 = tf.nn.selu(tf.matmul(layer2,W3)+tf.matmul(actionInputs,action_W3)+b3)
-            layer4 = tf.nn.selu(tf.matmul(layer3,W4)+b4)
-            layer5 = tf.nn.selu(tf.matmul(layer4, W5)+b5)
-            layer6 = tf.nn.selu(tf.matmul(layer5, W6)+b6)
+
+            W6 = tf.get_variable('W6', initializer=tf.random_uniform([Layer5_size,Layer6_size],
+                                                         -1/math.sqrt(Layer5_size),1/math.sqrt(Layer5_size)))
+
+            b6 = tf.get_variable('b6', initializer=tf.random_uniform([Layer6_size],
+                                                         -0.003,0.003))
+
+            W7 = tf.get_variable('W7', initializer=tf.random_uniform([Layer6_size, 1],
+                                                         -1/math.sqrt(Layer6_size),1/math.sqrt(Layer6_size)))
+
+
+            b7 = tf.get_variable('b7',initializer=tf.random_uniform( [1],
+                                                         -0.003,0.003))
+
+            layer1 = tf.nn.relu(tf.matmul(stateInputs,W1)+b1)
+            layer2 = tf.nn.leaky_relu(tf.matmul(layer1,W2)+b2)
+            layer3 = tf.nn.relu(tf.matmul(layer2,W3)+tf.matmul(actionInputs,action_W3)+b3)
+            layer4 = tf.nn.relu(tf.matmul(layer3,W4)+b4)
+            layer5 = tf.nn.relu(tf.matmul(layer4, W5)+b5)
+            layer6 = tf.nn.relu(tf.matmul(layer5, W6)+b6)
             q_value = tf.identity(tf.matmul(layer6,W7)+b7)
 
 
