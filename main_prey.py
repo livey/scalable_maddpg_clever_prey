@@ -22,7 +22,7 @@ maddpg = MaDDPG(sess,num_agents,agent_state_dim)
 preyddpg = PreyDDPG(sess)
 networks = NetworkManual(sess)
 
-Env = Environ(num_agents, render=True, savefig=False)
+Env = Environ(num_agents, render=False, savefig=False)
 
 
 for episode in range(1,max_episode):
@@ -45,8 +45,9 @@ for episode in range(1,max_episode):
         agents_state = agents_next_state
         prey_state   = prey_next_state
         if done:
-            print('Done!!!!!!!!!!!! at epoch{} , reward:{}'.format(epoch,agents_reward))
-            print('prey reward: {}'.format(prey_reward))
+            print('Done!!!!!!!!!!!! at epoch{} , reward:{}, prey_reward:{}'.format(epoch,agents_reward,
+                                                                                   prey_reward))
+            #print('prey reward: {}'.format(prey_reward))
             # add summary for each episode
 
             break
